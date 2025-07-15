@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { userServices } from "./user.service";
-import httpStatusCode from "http-status-codes";
+import httpStatus from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 
@@ -11,7 +11,7 @@ const createUser = catchAsync(
 
     sendResponse(res, {
       success: true,
-      statusCode: httpStatusCode.CREATED,
+      statusCode: httpStatus.CREATED,
       message: "User Created Successfully",
       data: user,
     });
@@ -24,7 +24,7 @@ const getAllUsers = catchAsync(
 
     sendResponse(res, {
       success: true,
-      statusCode: httpStatusCode.OK,
+      statusCode: httpStatus.OK,
       message: "User data retrieved successfully",
       meta: result.meta,
       data: result.data,
@@ -32,7 +32,25 @@ const getAllUsers = catchAsync(
   }
 );
 
+const updatedUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const payload = req.body;
+    const verifiedToken = req.user;
+
+    const user = await userServices.updateUser(userId, payload, verifiedToken);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "User Updated Successfully",
+      data: user,
+    });
+  }
+);
+
 export const userControllers = {
   createUser,
-  getAllUsers
+  getAllUsers,
+  updatedUser,
 };
