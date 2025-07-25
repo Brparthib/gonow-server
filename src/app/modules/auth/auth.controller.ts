@@ -13,16 +13,33 @@ import { envVars } from "../../config/env";
 
 const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const loginInfo = await authServices.credentialsLogin(req.body);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    passport.authenticate("local", async (err: any, user: any, info: any) => {
+      if (err) {
+        return next(new AppError(httpStatus.UNAUTHORIZED, err));
+      }
 
-    setCookie(res, loginInfo);
+      if (!user) {
+        return next(new AppError(httpStatus.UNAUTHORIZED, info.message));
+      }
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "User Logged in successfully",
-      data: loginInfo,
-    });
+      const userTokens = createUserTokens(user);
+
+      setCookie(res, userTokens);
+
+      delete user.toObject().password;
+
+      sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "User logged in successfully",
+        data: {
+          accessToken: userTokens.accessToken,
+          refreshToken: userTokens.refreshToken,
+          user,
+        },
+      });
+    })(req, res, next);
   }
 );
 
