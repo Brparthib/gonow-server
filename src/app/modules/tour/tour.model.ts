@@ -11,7 +11,7 @@ const tourTypeSchema = new Schema<ITourType>(
   }
 );
 
-export const tourType = model<ITourType>("TourType", tourTypeSchema);
+export const TourType = model<ITourType>("TourType", tourTypeSchema);
 
 const tourSchema = new Schema<ITour>(
   {
@@ -46,4 +46,35 @@ const tourSchema = new Schema<ITour>(
   }
 );
 
-export const tour = model<ITour>("Tour", tourSchema);
+tourSchema.pre("save", async function (next) {
+  if (this.isModified("name")) {
+    const baseSlug = this.title.toLowerCase().split(" ").join("-");
+    let slug = `${baseSlug}-division`;
+
+    let counter = 0;
+    while (await Tour.exists({ slug })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    this.slug = slug;
+  }
+  next();
+});
+
+tourSchema.pre("findOneAndUpdate", async function (next) {
+  const tour = this.getUpdate() as Partial<ITour>;
+  if (tour.title) {
+    const baseSlug = tour.title.toLowerCase().split(" ").join("-");
+    let slug = `${baseSlug}`;
+
+    let counter = 0;
+    while (await Tour.exists({ slug })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    tour.slug = slug;
+  }
+  next();
+});
+
+export const Tour = model<ITour>("Tour", tourSchema);
